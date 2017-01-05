@@ -34,3 +34,5 @@ uplpr.uploadPrisma(myprismas, connStr, "prismas", "prismas_consolidado")
 
 t_fin = time.time()
 logging.info("Elapsed time: %f", t_fin - t_ini)
+
+# probando vcs
