@@ -2,6 +2,8 @@ __author__ = 'Arnol'
 
 
 import logging
+import linecache
+import csv
 
 
 # -----------------------------------------------------------------------------
@@ -43,17 +45,17 @@ class Registro(object):
         :param data : vector con los datos de prismas
         :return:
         """
-        self.xcentre = data[0]
-        self.ycentre = data[1]
-        self.zcentre = data[2]
-        self.xlength = data[3]
-        self.ylength = data[4]
-        self.zlength = data[5]
-        self.litologia = data[6]
-        self.alteracion = data[7]
-        self.mineralizacion = data[8]
-        self.ucs = data[9]
-        self.rmr = data[10]
+        self.xcentre = float(data[0])
+        self.ycentre = float(data[1])
+        self.zcentre = float(data[2])
+        self.xlength = float(data[3])
+        self.ylength = float(data[4])
+        self.zlength = float(data[5])
+        self.litologia = float(data[6])
+        self.alteracion = float(data[7])
+        self.mineralizacion = float(data[8])
+        self.ucs = float(data[9])
+        self.rmr = float(data[10])
         self.field_1 = data[11]
         self.field_2 = data[12]
         self.field_3 = data[13]
@@ -96,8 +98,10 @@ class Registro(object):
 #     Objeto ModeloBloque
 # -----------------------------------------------------------------------------
 class ModeloBloque(object):
-    def __init__(self, name, fecha, xlength, ylength, zlength):
+    def __init__(self, name, fecha, xlength, ylength, zlength, toFile=False, tempfile=None):
         self.name = name
+        self.toFile = toFile
+        self.tempfile = tempfile
         self.puntos = 0  # Numero de registros que tiene el Modelo de Bloques
         self.datos = []  # Objetos de clase "registro"
         self.fecha = fecha
@@ -106,24 +110,46 @@ class ModeloBloque(object):
         self.zlength = zlength
 
     def registro(self, data):  # Fn para agregar un nuevo registro a ModeloBloques
-        reg = Registro()
-        reg.registro(data)
-        self.datos.append(reg)
+        # Crear nuevo archivo y borrar si existe uno previo
+        if self.puntos == 0 & self.toFile:
+            temp = open(self.tempfile, 'w+')
+            temp.close()
+        if self.toFile:
+            with open(self.tempfile, 'ab+') as tempfile:
+                wr = csv.writer(tempfile, quoting=csv.QUOTE_NONNUMERIC)
+                wr.writerow(data)
+        else:
+            reg = Registro()
+            reg.registro(data)
+            self.datos.append(reg)
         self.puntos += 1
 
     def getRegistro(self, k):  # # Obtiene todos los datos del registro "k" como una lista
-        return (self.datos[k]).getData()
+        if k >= self.puntos:
+            return -1
+        if self.toFile:
+            with open(self.tempfile, 'r') as tempfile:
+                data = linecache.getline(self.tempfile, k+1).strip('\n')
+                data = data.split(",")
+                reg = Registro()
+                reg.registro(data)
+            return reg.getData()
+        else:
+            return (self.datos[k]).getData()
 
+    # TODO: modificar para la implementacion desde archivo
     def getColumn(self, columna):  # Obtiene todos los datos del campo "columna" como una lista
         xx = []
         for i in xrange(self.puntos):
             xx.append((self.datos[i]).getData()[columna])
         return xx
 
+    # TODO: modificar para la implementacion desde archivo
     def deleteRegistro(self, k):
         del self.datos[k]
         self.puntos -= 1
 
+    # TODO: modificar para la implementacion desde archivo
     def updateRegistro(self, k, newdata):
         self.deleteRegistro(k)
         self.registro(newdata)

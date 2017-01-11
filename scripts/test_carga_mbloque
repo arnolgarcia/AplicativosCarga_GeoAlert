@@ -10,16 +10,17 @@ logging.basicConfig(format='%(levelname)s-%(asctime)s: %(message)s', datefmt='%Y
                     level=logging.INFO)
 
 
-import scripts.modelobloque.driver_load as dr
-import scripts.prismas.uploadPrismas as uplpr
+import scripts.modelobloque.driver_LoadModeloBloque as dr
+
+#import scripts.prismas.uploadPrismas as uplpr
 import time
+import datetime
 
 t_ini = time.time()
 
 # Variables
-filen_chuqui = "C:\Users\Arnol\Gesecology\[Demo] Chuquicamata\datos\prismas\Prismas_2006.csv"
-filen_mel = "C:\Users\Arnol\Desktop\copia Data MEL\Prismas\Norte_Inferior.txt"
-filen_mel = "C:\Users\Arnol\Desktop\copia Data MEL\Prismas\Sur_Este.txt"
+#filen_chuqui = "C:\Users\Arnol\Gesecology\[Demo] Chuquicamata\datos\prismas\Prismas_2006.csv"
+filen_mel = "C:\Users\Arnol\Desktop\copia Data MEL\ModeloBloque\\new 1.csv"
 
 connStr = "PG: host='%s' port='%s' dbname='%s' user='%s' password='%s'" % ("152.231.85.227",
                                                                            "5432",
@@ -28,8 +29,18 @@ connStr = "PG: host='%s' port='%s' dbname='%s' user='%s' password='%s'" % ("152.
                                                                            "Admin321")
 
 
-myprismas = dr.loadPrisma_Mel(filen_mel)
-uplpr.uploadPrisma(myprismas, connStr, "prismas", "prismas_consolidado")
+mymbloque = dr.loadMBloque_Mel(filen_mel, 'modelo bloque MEL', datetime.datetime(2017, 1, 5), 25, 25, 15, True,
+                               'C:\Users\Arnol\Desktop\copia Data MEL\ModeloBloque\\temp_bloques.txt')
+
+#dr.uploadMBloque(mymbloque, connStr, "modelo_bloque", "modelo_bloque")
+
+
+t_fin = time.time()
+print mymbloque.getRegistro(0)
+print mymbloque.getRegistro(36)
+print mymbloque.getRegistro(6)
+print mymbloque.getRegistro(25)
+print mymbloque.getRegistro(1)
 
 
 t_fin = time.time()

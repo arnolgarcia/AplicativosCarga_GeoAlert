@@ -8,31 +8,24 @@ import datetime as dt
 
 # TODO: Definir el tipo de sensor asociado y la salida de datos estandar para generalizar el nombre del driver,
 # ahora dice Mel, pero puede ser un sensor mas general.
-def loadMBloque_Mel(filename, nombre, fecha, xl, yl, zl):
+def loadMBloque_Mel(filename, nombre, fecha, xl, yl, zl, toFile, tempFile):
     """Carga datos del modelo de bloques de Mel.
     Metodo para extraer los datos del modelo de bloque desde un archivo .csv y guardarlos como objeto *ModeloBloque*.
-    :param filename: ruta y nombre del archivo a cargar (datos de mel solamente)
-    :type filename: str
+    :param (str) filename: ruta y nombre del archivo a cargar (datos de mel solamente)
+    :param (str) nombre:
+    :param (date) fecha:
+    :param (numeric) xl:
+    :param (numeric) yl:
+    :param (numeric) zl:
     :return: objeto con los datos del modelo de bloque
-    :rtype: ModeloBloque
+    :rtype: Objeto ModeloBloque
     """
 
     namefile = filename.split("\\")[-1]
     logging.info("Inicia proceso de carga del modelo de bloque (Mel) desde el archivo '%s'", namefile)
-    datos = mb.ModeloBloque(nombre, fecha, xl, yl, zl)
+    mybloque = mb.ModeloBloque(nombre, fecha, xl, yl, zl, toFile, tempFile)
     lineasprocesadas = 0
-    # Inicializar todos los valores como NULL, en caso que alguno no venga en el archivo
-    xcentre = "NULL"
-    ycentre = "NULL"
-    zcentre = "NULL"
-    xlength = "NULL"
-    ylength = "NULL"
-    zlength = "NULL"
-    litologia = "NULL"
-    alteracion = "NULL"
-    mineralizacion = "NULL"
-    ucs = "NULL"
-    rmr = "NULL"
+    # Inicializar como NULL los valores que no vienen en el archivo
     field1 = "NULL"
     field2 = "NULL"
     field3 = "NULL"
@@ -47,12 +40,13 @@ def loadMBloque_Mel(filename, nombre, fecha, xl, yl, zl):
         with open(filename) as infile:
             infile.seek(0)
             for line in infile:
-                Line = line.split("\t")  # El separador es tab en los archivos de Mel
-                if Line[0] != "xcentre":  # Saltarse la linea con los encabezados # TODO: ver si hay otra forma mas general de hacerlo
+                Line = line.split(",")  # El separador en los archivos de Mel
+                # TODO: ver si hay otra forma mas general de hacer lo siguiente
+                if Line[0] != '"xcentre"':  # Saltarse la linea con los encabezados
 
                     # Obtener valores desde el archivo
-                    xcentre = Line[0]
-                    ycentre = Line[1]
+                    xcentre = float(Line[0])
+                    ycentre = float(Line[1])
                     zcentre = float(Line[2])
                     xlength = float(Line[3])
                     ylength = float(Line[4])
@@ -65,13 +59,12 @@ def loadMBloque_Mel(filename, nombre, fecha, xl, yl, zl):
 
                     data = [xcentre, ycentre, zcentre, xlength, ylength, zlength,
                             litologia, alteracion, mineralizacion,
-                            ucs,rmr,
+                            ucs, rmr,
                             field1, field2, field3, field4, field5, field6, field7, field8, field9]
-                    datos.registro(data)
+                    mybloque.registro(data)
                     lineasprocesadas += 1
-        infile.close()
-        logging.info("Carga de datos ok, lineas procesadas %d, puntos encontrados %d", lineasprocesadas, datos.elementos)
+        logging.info("Carga de datos ok, lineas procesadas %d, puntos encontrados %d", lineasprocesadas, mybloque.puntos)
     except Exception:
         logging.exception("Error al cargar datos desde archivo \n")
     finally:
-        return datos
+        return mybloque
