@@ -5,103 +5,145 @@ import logging
 import linecache
 import csv
 
+from itertools import (takewhile,repeat)
+
 
 # -----------------------------------------------------------------------------
-#     Objeto Registro
+#     Objeto RegistroMB_CMDIC
 # -----------------------------------------------------------------------------
-class Registro(object):
+class RegistroMB_CMDIC(object):
 
     def __init__(self):
-        """
-        Clase para almacenar un registro del modelo de bloques
-        :param
-        :return:
-        """
-        # TODO: ver si hay que incluir mas campos con los datos de Collaahuasi
-        self.xcentre = None
-        self.ycentre = None
-        self.zcentre = None
-        self.xlength = None
-        self.ylength = None
-        self.zlength = None
-        self.litologia = None
-        self.alteracion = None
-        self.mineralizacion = None
-        self.ucs = None
-        self.rmr = None
-        self.field_1 = ""
-        self.field_2 = ""
-        self.field_3 = ""
-        self.field_4 = ""
-        self.field_5 = ""
-        self.field_6 = ""
-        self.field_7 = ""
-        self.field_8 = ""
-        self.field_9 = ""
+        # TODO: comprobar que nombres sean los originales y en el orden correcto
+        self.fields = ['xcentre', 'ycentre', 'zcentre',
+                       'xlength', 'ylength', 'zlength',
+                       'alter_det', 'alter_mp',
+                       'banco',
+                       'bsu', 'bsu_rat', 'densidad_mp',
+                       'ff', 'ff_lp', 'ff_rat',
+                       'gsi_rat',
+                       'hsag', 'hsaga',
+                       'int_alt', 'jc', 'jc_rat',
+                       'lito_det', 'lito_mp',
+                       'mi', 'mnzn_det', 'mnzn_mp',
+                       'modelo',
+                       'mot', 'mot_mp', 'ppv_crit', 'rfc_op',
+                       'rmom', 'rmu_rat',
+                       'rqd', 'rqd_porc', 'rqd_rat',
+                       'rst_op', 'rsu_rat',
+                       'st_com',
+                       'topo', 'topo_mp',
+                       'ucs', 'ugcut', 'ugg', 'ugg_rat',
+                       'ugm', 'ugm_mp', 'ugt']
+        self.data = []
+        self.nrofields = len(self.fields)  # 49 campos
+        self.llave = "(xcentre, ycentre, zcentre)"
+        for i in range(self.nrofields):
+            setattr(self, self.fields[i], None)
 
     def registro(self, data):
-        """
-        Metodo para almacenar datos en un objeto de clase Registro()
-        :param data : vector con los datos de prismas
-        :return:
-        """
-        self.xcentre = float(data[0])
-        self.ycentre = float(data[1])
-        self.zcentre = float(data[2])
-        self.xlength = float(data[3])
-        self.ylength = float(data[4])
-        self.zlength = float(data[5])
-        self.litologia = float(data[6])
-        self.alteracion = float(data[7])
-        self.mineralizacion = float(data[8])
-        self.ucs = float(data[9])
-        self.rmr = float(data[10])
-        self.field_1 = data[11]
-        self.field_2 = data[12]
-        self.field_3 = data[13]
-        self.field_4 = data[14]
-        self.field_5 = data[15]
-        self.field_6 = data[16]
-        self.field_7 = data[17]
-        self.field_8 = data[18]
-        self.field_9 = data[19]
+        self.data = []
+        for i in range(self.nrofields):
+            setattr(self, self.fields[i], float(data[i]))
+            self.data.append(float(data[i]))
 
     def getData(self):
-        """
-        Metodo para obtener los datos almacenados en un objeto de clase Registro()
-        :param
-        :return: [] -> Datos en formato de vector
-        """
-        return [self.xcentre,
-                self.ycentre,
-                self.zcentre,
-                self.xlength,
-                self.ylength,
-                self.zlength,
-                self.litologia,
-                self.alteracion,
-                self.mineralizacion,
-                self.ucs,
-                self.rmr,
-                self.field_1,
-                self.field_2,
-                self.field_3,
-                self.field_4,
-                self.field_5,
-                self.field_6,
-                self.field_7,
-                self.field_8,
-                self.field_9]
+        return self.data
+
+    def registroToDB(self):
+        aux = []
+        for i in range(3, self.nrofields):
+            aux.append(getattr(self, self.fields[i]))
+        datos = [self.xcentre, self.ycentre, self.zcentre, aux]
+        # Retornar salida
+        newReg = RegistroMB_DB()
+        newReg.registro(datos)
+        return newReg
+
+    def registroToMel(self):
+        # TODO: confirmar las variables lito, alter, mnzn y rmr o ver que se puede poner en su lugar
+        datos = [self.xcentre, self.ycentre, self.zcentre,
+                 self.xlength, self.ylength, self.zlength,
+                 self.lito_det, self.alter_det, self.mnzn_det,
+                 self.ucs, self.rmu_rat]
+        # Retornar salida
+        newReg = RegistroMB_MEL()
+        newReg.registro(datos)
+        return newReg
+
+
+# -----------------------------------------------------------------------------
+#     Objeto RegistroMB_MEL
+# -----------------------------------------------------------------------------
+class RegistroMB_MEL(object):
+
+    def __init__(self):
+        # TODO: comprobar que nombres sean los originales y en el orden correcto
+        self.fields = ['xcentre', 'ycentre', 'zcentre',
+                       'xlength', 'ylength', 'zlength',
+                       'litologia', 'alteracion', 'minzone'
+                       'ucs', 'rmr_adic']
+        self.data = []
+        self.nrofields = len(self.fields)  # 11 campos
+        self.llave = "(xcentre, ycentre, zcentre)"
+        for i in range(self.nrofields):
+            setattr(self, self.fields[i], None)
+
+    def registro(self, data):
+        self.data = []
+        for i in range(self.nrofields):
+            setattr(self, self.fields[i], float(data[i]))
+            self.data.append(float(data[i]))
+
+    def getData(self):
+        return self.data
+
+    def registroToDB(self):
+        aux = []
+        for i in range(3, self.nrofields):
+            aux.append(getattr(self, self.fields[i]))
+        datos = [self.xcentre, self.ycentre, self.zcentre, aux]
+        # Retornar salida
+        newReg = RegistroMB_DB()
+        newReg.registro(datos)
+        return newReg
+
+
+# -----------------------------------------------------------------------------
+#     Objeto RegistroMB_DB
+# -----------------------------------------------------------------------------
+class RegistroMB_DB(object):
+
+    def __init__(self):
+        self.fields = ['xcentre', 'ycentre', 'zcentre', 'valores']
+        self.data = []
+        self.nrofields = len(self.fields)
+        self.llave = "(xcentre, ycentre, zcentre)"
+        #self.fields_valores = None  # TODO: ver si agregarlo o no
+        for i in range(self.nrofields):
+            setattr(self, self.fields[i], None)
+
+    def registro(self, data):
+        self.data = []
+        for i in range(self.nrofields):
+            setattr(self, self.fields[i], data[i])
+            self.data.append(float(data[i]))
+
+    def getData(self):
+        return self.data
 
 
 # -----------------------------------------------------------------------------
 #     Objeto ModeloBloque
 # -----------------------------------------------------------------------------
 class ModeloBloque(object):
-    def __init__(self, name, fecha, xlength, ylength, zlength, toFile=False, tempfile=None):
+    def __init__(self, name, fecha, xlength, ylength, zlength, toFile=False, tempfile=None, mybatch=1):
         self.name = name
         self.toFile = toFile
+        self.batch = mybatch
         self.tempfile = tempfile
+        self.sep = ","
+        self.header = False
         self.puntos = 0  # Numero de registros que tiene el Modelo de Bloques
         self.datos = []  # Objetos de clase "registro"
         self.fecha = fecha
@@ -109,34 +151,67 @@ class ModeloBloque(object):
         self.ylength = ylength
         self.zlength = zlength
 
-    def registro(self, data):  # Fn para agregar un nuevo registro a ModeloBloques
-        # Crear nuevo archivo y borrar si existe uno previo
-        if self.puntos == 0 & self.toFile:
+    def registro(self, dataReg):  # Fn para agregar un nuevo registro a ModeloBloques
+        # Guardar registro
+        self.datos.append(dataReg)
+        self.puntos += 1
+
+        # Si se guarda en disco crear nuevo archivo y borrar si existe uno previo
+        if self.puntos == 1 & self.toFile:
             temp = open(self.tempfile, 'w+')
             temp.close()
+
+        # Guardar si se llega al batch o se "cierra"
+        if self.toFile and (self.puntos % self.batch == 0):
+            self.saveToFile()
+
+    def getRegistro(self, k):  # # Obtiene todos los datos del registro "k" como una lista, con k= 1, 2,...
+        if k > self.puntos or k < 1:
+            logging.error("El valor %d esta fuera de rango, el modelo tiene %d puntos", k, self.puntos)
+            return -1
+        if self.header:
+            k += 1
+        if self.toFile:
+            with open(self.tempfile) as fp:
+                for i, line in enumerate(fp):
+                    if i == k-1:
+                        data = line
+                        break
+            data = [float(k) for k in data.split(self.sep)]
+            return data
+        else:
+            return [float(k) for k in (self.datos[k-1])]
+
+    def saveToFile(self):
         if self.toFile:
             with open(self.tempfile, 'ab+') as tempfile:
                 wr = csv.writer(tempfile, quoting=csv.QUOTE_NONNUMERIC)
-                wr.writerow(data)
-        else:
-            reg = Registro()
-            reg.registro(data)
-            self.datos.append(reg)
-        self.puntos += 1
+                wr.writerows(self.datos)
+            self.datos = []
+            logging.debug("Lineas pocesadas y guardadas en archivo: %d", self.puntos)
 
-    def getRegistro(self, k):  # # Obtiene todos los datos del registro "k" como una lista
-        if k >= self.puntos:
-            return -1
-        if self.toFile:
-            with open(self.tempfile, 'r') as tempfile:
-                data = linecache.getline(self.tempfile, k+1).strip('\n')
-                data = data.split(",")
-                reg = Registro()
-                reg.registro(data)
-            return reg.getData()
-        else:
-            return (self.datos[k]).getData()
+    def closeRegistros(self):
+        if self.toFile & len(self.datos)>0:
+            self.saveToFile()
 
+    def setFile(self, fileName, sep, hasheader):
+        self.toFile = True
+        self.tempfile = fileName
+        self.sep = sep
+        self.header = hasheader
+        # Setear el numero de puntos
+        f = open(fileName, 'rb')
+        bufgen = takewhile(lambda x: x, (f.read(1024*1024) for _ in repeat(None)))
+        self.puntos = sum( buf.count(b'\n') for buf in bufgen if buf)
+        # si el archivo tiene encabezado restar una fila
+        if self.header:
+            self.puntos += -1
+
+
+
+
+
+"""
     # TODO: modificar para la implementacion desde archivo
     def getColumn(self, columna):  # Obtiene todos los datos del campo "columna" como una lista
         xx = []
@@ -153,4 +228,16 @@ class ModeloBloque(object):
     def updateRegistro(self, k, newdata):
         self.deleteRegistro(k)
         self.registro(newdata)
+"""
 
+
+# -----------------------------------------------------------------------------
+#     Funciones generales
+# -----------------------------------------------------------------------------
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False

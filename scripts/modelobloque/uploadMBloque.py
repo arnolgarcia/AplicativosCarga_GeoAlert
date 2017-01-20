@@ -6,9 +6,53 @@
 """
 
 # TODO: actualiza a mbloque, aun esta como prismas
+import ClaseModeloBloque as mb
+import scripts.DB_connection.ClaseBatchSQL as btch
 import logging
 from osgeo import ogr
 ogr.UseExceptions()
+
+
+# Driver para cargar los datos de Collahuasi directo desde el archivo
+def uploadMbFromFile_CMDIC(fullFileName, connString, strEsquema, strTabla, batch=1):
+
+    logging.info("Inicia proceso de carga del modelo de bloque (CMDIC) desde el archivo '%s'", fullFileName)
+    lineasprocesadas = 0
+
+    # Inicialización del boque y del batch si batch es distinto de 0 TODO
+    mybloque = mb.RegistroMB_DB()
+    mybatch = btch.BatchSQL(connString, strTabla, strEsquema, mybloque, batch)
+
+    try:
+        # Testear conexion
+        logging.info("Abriendo conexion a la BD")
+        conn = ogr.Open(connString)
+        if conn:
+            conn.Destroy()
+    except Exception:
+        logging.exception("Error al tratar de conectarse a la BD con los parametros '%s'", str(connString))
+    else:
+        logging.debug("Conexion exitosa, empieza carga de archivos...")
+        try:
+            with open(fullFileName) as infile:
+                infile.seek(0)
+
+                for line in infile:
+                    Line = line.split(",")  # El separador en los archivos de CMDIC
+                    # TODO: ver si hay otra forma mas general de hacer lo siguiente
+                    if str(Line[0]).lower() != "xcentre":  # Saltarse la linea con los encabezados
+                        data = [float(k) for k in Line]
+                        # Asignar datos al objeto RegistroMB
+                        mybloqueCMDIC = mb.RegistroMB_CMDIC()
+                        mybloqueCMDIC.registro(data)
+                        mybloque = mybloqueCMDIC.registroToDB()
+                        lineasprocesadas += 1
+                        mybatch.run(mybloque.getData())
+            logging.info("Carga de datos ok, lineas procesadas %d, puntos encontrados %d", lineasprocesadas, mybloque.puntos)
+        except Exception:
+            logging.exception("Error al cargar datos desde archivo \n")
+        finally:
+            return mybloque
 
 
 def uploadMBloque(mbloque, connstring, StrEsquema, StrTabla, batch = 0):
