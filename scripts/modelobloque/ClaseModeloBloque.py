@@ -7,7 +7,7 @@ import csv
 from osgeo import ogr
 
 
-from itertools import (takewhile,repeat)
+from itertools import (takewhile, repeat)
 
 
 # -----------------------------------------------------------------------------
