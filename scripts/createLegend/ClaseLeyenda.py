@@ -1,70 +1,86 @@
 __author__ = 'Arnol'
 
 
-import logging
-
-
 # -----------------------------------------------------------------------------
-#     Objeto RegistroMB_CMDIC
+#     Objeto
 # -----------------------------------------------------------------------------
 class Leyenda(object):
 
-    def __init__(self):
-        # TODO: comprobar que nombres sean los originales y en el orden correcto
-        self.fields = ['xcentre', 'ycentre', 'zcentre',
-                       'xlength', 'ylength', 'zlength',
-                       'alter_det', 'alter_mp',
-                       'banco',
-                       'bsu', 'bsu_rat', 'densidad_mp',
-                       'ff', 'ff_lp', 'ff_rat',
-                       'gsi_rat',
-                       'hsag', 'hsaga',
-                       'int_alt', 'jc', 'jc_rat',
-                       'lito_det', 'lito_mp',
-                       'mi', 'mnzn_det', 'mnzn_mp',
-                       'modelo',
-                       'mot', 'mot_mp', 'ppv_crit', 'rfc_op',
-                       'rmom', 'rmu_rat',
-                       'rqd', 'rqd_porc', 'rqd_rat',
-                       'rst_op', 'rsu_rat',
-                       'st_com',
-                       'topo', 'topo_mp',
-                       'ucs', 'ugcut', 'ugg', 'ugg_rat',
-                       'ugm', 'ugm_mp', 'ugt']
-        self.data = []
-        self.nrofields = len(self.fields)  # 49 campos
-        self.llave = "(xcentre, ycentre, zcentre)"
-        for i in range(self.nrofields):
-            setattr(self, self.fields[i], None)
+    def __init__(self, tempfile):
+        self.template = tempfile
+        self.titulo = ""
+        self.ruleNames = []
+        self.saturacion = None
+        self.size = None
+        self.sldString = ""
+        self.atributo = ""
 
-    def registro(self, data):
-        self.data = []
-        for i in range(self.nrofields):
-            setattr(self, self.fields[i], float(data[i]))
-            self.data.append(float(data[i]))
+    def create(self, titulo, rlNames, sat, size, atributo, outname):
+        self.titulo = titulo
+        self.ruleNames = rlNames
+        self.saturacion = sat
+        self.size = size
+        self.atributo = atributo
 
-    def getData(self):
-        return self.data
+        with open(self.template) as sldfile:
+            self.sldString = sldfile.read()
+        self.replaceTitulo()
+        self.replaceSat()
+        self.replaceSize()
+        self.replaceAtt()
+        self.replaceRulename()
 
-    def registroToDB(self):
-        aux = []
-        for i in range(3, self.nrofields):
-            aux.append(getattr(self, self.fields[i]))
-        aux = str(aux).replace("[", "{").replace("]", "}")
-        datos = [self.xcentre, self.ycentre, self.zcentre, aux]
-        # Retornar salida
-        newReg = RegistroMB_DB()
-        newReg.registro(datos)
-        return newReg
+        outfile = open(outname, 'w+')
+        outfile.write(self.sldString)
 
-    def registroToMel(self):
-        # TODO: confirmar las variables lito, alter, mnzn y rmr o ver que se puede poner en su lugar
-        datos = [self.xcentre, self.ycentre, self.zcentre,
-                 self.xlength, self.ylength, self.zlength,
-                 self.lito_det, self.alter_det, self.mnzn_det,
-                 self.ucs, self.rmu_rat]
-        # Retornar salida
-        newReg = RegistroMB_MEL()
-        newReg.registro(datos)
-        return newReg
+    def replaceTitulo(self):
+        new_titulo = ">%s<" % self.titulo
+        self.sldString = self.sldString.replace(">titulo<", new_titulo)
+
+    def replaceSat(self):
+        new_sat = ">%d<" % self.saturacion
+        self.sldString = self.sldString.replace(">saturacion<", new_sat)
+
+    def replaceAtt(self):
+        new_att = ">%s<" % self.atributo
+        self.sldString = self.sldString.replace(">atributo<", new_att)
+
+    def replaceSize(self):
+        new_size = ">%d<" % self.size
+        self.sldString = self.sldString.replace(">pixelsize<", new_size)
+
+    def replaceRulename(self):
+        i = 0
+        for name in self.ruleNames:
+            old_name = ">rulename%d<" % (i+1)
+            new_name = ">%s<" % name
+            self.sldString = self.sldString.replace(old_name, new_name)
+            i += 1
+
+
+def formatRulenames(nro_clases, unidades, min_value, max_value, interv_cerrado):
+    ruleNames = []
+
+    if interv_cerrado:
+        nro_cl_inside = nro_clases
+    else:
+        nro_cl_inside = nro_clases - 2
+
+    step = 1.0*(max_value - min_value) / nro_cl_inside
+
+    if not interv_cerrado:
+        str_rule = "Less than %g%s" % (min_value, unidades)
+        ruleNames.append(str_rule)
+
+    for i in range(nro_cl_inside):
+        str_rule = "Between %g%s and %g%s" % (min_value + step * i, unidades,
+                                              min_value + step * (i+1), unidades)
+        ruleNames.append(str_rule)
+
+    if not interv_cerrado:
+        str_rule = "Greatest than %g%s" % (max_value, unidades)
+        ruleNames.append(str_rule)
+
+    return  ruleNames
+
 
