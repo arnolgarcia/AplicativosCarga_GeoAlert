@@ -1,4 +1,6 @@
-__author__ = 'Arnol'
+# -*- coding: utf-8 -*-
+#
+# __author__ = 'Arnol'
 
 import logging
 from osgeo import ogr
