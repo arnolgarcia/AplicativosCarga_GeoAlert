@@ -46,7 +46,7 @@ att = "lito"
 
 
 """
-fname_layer = "mbloque_mnzn"
+fname_layer = "mbloque_mine"
 tit = "Mineralizacion"
 nro_rules = 7
 value_rules = ["1", "4", "5", "6", "7", "8", "0"]
@@ -57,7 +57,7 @@ rlnames = ["Mixto",
            "Primario",
            "Esteril",
            "Lixiviado"]
-att = "mnzn"
+att = "mine"
 """
 
 
