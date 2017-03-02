@@ -68,8 +68,9 @@ class Leyenda(object):
 # -----------------------------------------------------------------------------
 #     Funciones extras
 # -----------------------------------------------------------------------------
-def formatRulenames(nro_clases, unidades, min_value, max_value, interv_cerrado, breaks):
+def formatRulenames(nro_clases, unidades, min_value, max_value, interv_cerrado):
     ruleNames = []
+    ruleBreaks = []
 
     if interv_cerrado:
         nro_cl_inside = nro_clases
@@ -81,20 +82,24 @@ def formatRulenames(nro_clases, unidades, min_value, max_value, interv_cerrado, 
     if not interv_cerrado:
         str_rule = "Less than %g%s" % (min_value, unidades)
         ruleNames.append(str_rule)
+        ruleBreaks.append(min_value)
 
     for i in range(nro_cl_inside):
         str_rule = "Between %g%s and %g%s" % (min_value + step * i, unidades,
                                               min_value + step * (i+1), unidades)
         ruleNames.append(str_rule)
+        ruleBreaks.append(min_value + step * i)
+
+    ruleBreaks.append(max_value)
 
     if not interv_cerrado:
         str_rule = "Greatest than %g%s" % (max_value, unidades)
         ruleNames.append(str_rule)
 
-    return ruleNames
+    return [ruleNames, ruleBreaks]
 
 
-def createTemplate(tipo, nro_rules, value_filter):
+def createTemplate(tipo, nro_rules, value_filter, palette):
     # Definir templates
     txt_head = "C:\Users\Arnol\GitHub\AplicativosCarga_GeoAlert\scripts\createLegend\\template_head.sld"
     txt_tail = "C:\Users\Arnol\GitHub\AplicativosCarga_GeoAlert\scripts\createLegend\\template_tail.sld"
@@ -110,12 +115,14 @@ def createTemplate(tipo, nro_rules, value_filter):
     sld_rule = ""
 
     # Definir colores
-    if tipo == 'clases' and nro_rules <= 10:
-        colores = sns.color_palette("Set2", nro_rules).as_hex()
-    elif tipo == 'clases' and nro_rules > 10:
-        colores = sns.color_palette("cubehelix", nro_rules).as_hex()
-    elif tipo == 'rango_cerrado':
-        colores = sns.color_palette("Blues", nro_rules).as_hex()
+    if palette is None:
+        if tipo == 'clases' and nro_rules <= 10:
+            palette = "Set2"
+        elif tipo == 'clases' and nro_rules > 10:
+            palette = "cubehelix"
+        elif tipo == 'rango_cerrado':
+            palette = "Blues"
+    colores = sns.color_palette(palette, nro_rules).as_hex()
 
     # definir regla en caso de clases
     if tipo == 'clases':
