@@ -38,7 +38,7 @@ for fileName in os.listdir(fullPath):
     if len(fileName.split(".")) > 1:
         # Cargar solo archivos .txt
         if fileName.split(".")[1] == "txt":
-            filen= fullFileName
+            filen = fullFileName
             logging.info('Loading file... %s', filen)
 
             # Guardar archivo de carga en un elemnto TablaPiezometros
